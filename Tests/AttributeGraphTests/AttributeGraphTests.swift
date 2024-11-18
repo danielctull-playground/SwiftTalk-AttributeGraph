@@ -3,10 +3,23 @@ import Testing
 
 @Test func example() async throws {
   let graph = AttributeGraph()
-  let a = graph.input(10)
-  let b = graph.input(20)
-  let c = graph.rule { a.wrappedValue + b.wrappedValue }
+  let a = graph.input(name: "A", 10)
+  let b = graph.input(name: "B", 20)
+  let c = graph.rule(name: "C") { a.wrappedValue + b.wrappedValue }
   #expect(c.wrappedValue == 30)
+
+  let expectedGraphViz = """
+    digraph {
+    A
+    B
+    C
+    A -> C
+    B -> C
+    }
+    """
+
+  #expect(graph.graphViz == expectedGraphViz)
+
   // a.wrappedValue = 40
   // #expect(c.wrappedValue == 60)
   //
