@@ -1,25 +1,30 @@
 
 final class AttributeGraph {
   var nodes: [AnyNode] = []
+  var currentNode: AnyNode?
 
   func input<Value>(name: String, _ value: Value) -> Node<Value> {
-    let node = Node(name: name, wrappedValue: value)
+    let node = Node(name: name, graph: self, wrappedValue: value)
     nodes.append(node)
     return node
   }
 
   func rule<Value>(name: String, _ rule: @escaping () -> Value) -> Node<Value> {
-    let node = Node(name: name, rule: rule)
+    let node = Node(name: name, graph: self, rule: rule)
     nodes.append(node)
     return node
   }
 
   var graphViz: String {
-    let nodes = nodes
+
+    let nodes = self.nodes
       .map(\.name)
       .joined(separator: "\n")
 
-    let edges = ""
+    let edges = self.nodes
+      .flatMap(\.outgoingEdges)
+      .map { "\($0.from.name) -> \($0.to.name)" }
+      .joined(separator: "\n")
 
     return """
     digraph {
@@ -42,9 +47,12 @@ final class Edge {
 
 protocol AnyNode: AnyObject {
   var name: String { get }
+  var outgoingEdges: [Edge] { get }
+  var incomingEdges: [Edge] { get set }
 }
 
 final class Node<Value>: AnyNode {
+  unowned var graph: AttributeGraph
   let name: String
   var rule: (() -> Value)?
   var incomingEdges: [Edge] = []
@@ -54,9 +62,7 @@ final class Node<Value>: AnyNode {
 
   var wrappedValue: Value {
     get {
-      if cachedValue == nil, let rule {
-        cachedValue = rule()
-      }
+      recomputeIfNeeded()
       return cachedValue!
     }
     set {
@@ -65,14 +71,29 @@ final class Node<Value>: AnyNode {
     }
   }
 
+  func recomputeIfNeeded() {
+    if let node = graph.currentNode {
+      let edge = Edge(from: self, to: node)
+      outgoingEdges.append(edge)
+      node.incomingEdges.append(edge)
+    }
+    if cachedValue == nil, let rule {
+      let previousNode = graph.currentNode
+      defer { graph.currentNode = previousNode }
+      graph.currentNode = self
+      cachedValue = rule()
+    }
+  }
 
-  init(name: String, wrappedValue: Value) {
+  init(name: String, graph: AttributeGraph, wrappedValue: Value) {
     self.name = name
+    self.graph = graph
     self.cachedValue = wrappedValue
   }
 
-  init(name: String, rule: @escaping () -> Value) {
+  init(name: String, graph: AttributeGraph, rule: @escaping () -> Value) {
     self.name = name
+    self.graph = graph
     self.rule = rule
   }
 }
