@@ -8,7 +8,7 @@ import Testing
   let c = graph.rule(name: "C") { a.wrappedValue + b.wrappedValue }
   #expect(c.wrappedValue == 30)
 
-  let expectedGraphViz = """
+  #expect(graph.graphViz == """
     digraph {
     A
     B
@@ -16,14 +16,56 @@ import Testing
     A -> C
     B -> C
     }
-    """
+    """)
 
-  #expect(graph.graphViz == expectedGraphViz)
+   a.wrappedValue = 40
+//   #expect(c.wrappedValue == 60)
 
-  // a.wrappedValue = 40
-  // #expect(c.wrappedValue == 60)
-  //
-  // dependencies
-  // a -> c
-  // b -> c
+  #expect(graph.graphViz == """
+    digraph {
+    A
+    B
+    C [style=dashed]
+    A -> C [style=dashed]
+    B -> C
+    }
+    """)
+}
+
+@Test func twoDeep() async throws {
+  let graph = AttributeGraph()
+  let a = graph.input(name: "A", 10)
+  let b = graph.input(name: "B", 20)
+  let c = graph.rule(name: "C") { a.wrappedValue + b.wrappedValue }
+  let d = graph.rule(name: "D") { c.wrappedValue * 2 }
+  #expect(c.wrappedValue == 30)
+  #expect(d.wrappedValue == 60)
+
+  #expect(graph.graphViz == """
+    digraph {
+    A
+    B
+    C
+    D
+    A -> C
+    B -> C
+    C -> D
+    }
+    """)
+
+   a.wrappedValue = 40
+//   #expect(c.wrappedValue == 60)
+//   #expect(c.wrappedValue == 120)
+
+  #expect(graph.graphViz == """
+    digraph {
+    A
+    B
+    C [style=dashed]
+    D [style=dashed]
+    A -> C [style=dashed]
+    B -> C
+    C -> D
+    }
+    """)
 }

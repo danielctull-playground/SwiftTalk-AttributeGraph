@@ -18,12 +18,12 @@ final class AttributeGraph {
   var graphViz: String {
 
     let nodes = self.nodes
-      .map(\.name)
+      .map { "\($0.name)\($0.potentiallyDirty ? " [style=dashed]" : "")" }
       .joined(separator: "\n")
 
     let edges = self.nodes
       .flatMap(\.outgoingEdges)
-      .map { "\($0.from.name) -> \($0.to.name)" }
+      .map { "\($0.from.name) -> \($0.to.name)\($0.pending ? " [style=dashed]" : "")" }
       .joined(separator: "\n")
 
     return """
@@ -38,6 +38,7 @@ final class AttributeGraph {
 final class Edge {
   unowned let from: AnyNode
   unowned let to: AnyNode
+  var pending = false
 
   init(from: AnyNode, to: AnyNode) {
     self.from = from
@@ -49,6 +50,7 @@ protocol AnyNode: AnyObject {
   var name: String { get }
   var outgoingEdges: [Edge] { get }
   var incomingEdges: [Edge] { get set }
+  var potentiallyDirty: Bool { get set }
 }
 
 final class Node<Value>: AnyNode {
@@ -57,6 +59,14 @@ final class Node<Value>: AnyNode {
   var rule: (() -> Value)?
   var incomingEdges: [Edge] = []
   var outgoingEdges: [Edge] = []
+  var potentiallyDirty = false {
+    didSet {
+      guard potentiallyDirty, potentiallyDirty != oldValue else { return }
+      for edge in outgoingEdges {
+        edge.to.potentiallyDirty = true
+      }
+    }
+  }
 
   private var cachedValue: Value?
 
@@ -68,6 +78,10 @@ final class Node<Value>: AnyNode {
     set {
       assert(rule == nil)
       cachedValue = newValue
+      for edge in outgoingEdges {
+        edge.pending = true
+        edge.to.potentiallyDirty = true
+      }
     }
   }
 
