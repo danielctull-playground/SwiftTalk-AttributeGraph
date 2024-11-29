@@ -53,9 +53,7 @@ import Testing
     }
     """)
 
-   a.wrappedValue = 40
-//   #expect(c.wrappedValue == 60)
-//   #expect(c.wrappedValue == 120)
+  a.wrappedValue = 40
 
   #expect(graph.graphViz == """
     digraph {
@@ -68,4 +66,19 @@ import Testing
     C -> D
     }
     """)
+
+  #expect(d.wrappedValue == 120)
+
+  let str3 = """
+    digraph {
+    A
+    B
+    C
+    D
+    A -> C
+    B -> C
+    C -> D
+    }
+    """
+  #expect(str3 == graph.graphViz)
 }

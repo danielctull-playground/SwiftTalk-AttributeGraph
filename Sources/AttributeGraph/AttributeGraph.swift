@@ -48,9 +48,10 @@ final class Edge {
 
 protocol AnyNode: AnyObject {
   var name: String { get }
-  var outgoingEdges: [Edge] { get }
+  var outgoingEdges: [Edge] { get set }
   var incomingEdges: [Edge] { get set }
   var potentiallyDirty: Bool { get set }
+  func recomputeIfNeeded()
 }
 
 final class Node<Value>: AnyNode {
@@ -86,17 +87,46 @@ final class Node<Value>: AnyNode {
   }
 
   func recomputeIfNeeded() {
+
+    // Record dependency
     if let node = graph.currentNode {
       let edge = Edge(from: self, to: node)
       outgoingEdges.append(edge)
       node.incomingEdges.append(edge)
     }
-    if cachedValue == nil, let rule {
+
+    guard let rule else { return }
+
+    if !potentiallyDirty && cachedValue != nil { return }
+
+    for edge in incomingEdges {
+      edge.from.recomputeIfNeeded()
+    }
+
+    let hasPendingIncomingEdge = incomingEdges.contains(where: \.pending)
+    potentiallyDirty = false
+
+    if hasPendingIncomingEdge || cachedValue == nil {
       let previousNode = graph.currentNode
       defer { graph.currentNode = previousNode }
       graph.currentNode = self
+      let isInitial = cachedValue == nil
+      removeIncomingEdges()
       cachedValue = rule()
+      // TODO: Only if cachedValue has changed
+      if !isInitial {
+        for edge in outgoingEdges {
+          edge.pending = true
+        }
+      }
     }
+  }
+
+  func removeIncomingEdges() {
+    for edge in incomingEdges {
+      edge.from.outgoingEdges.removeAll(where: { $0 === edge })
+    }
+    incomingEdges = []
   }
 
   init(name: String, graph: AttributeGraph, wrappedValue: Value) {
