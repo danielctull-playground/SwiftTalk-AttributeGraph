@@ -35,7 +35,7 @@ final class AttributeGraph {
   }
 }
 
-final class Edge {
+public final class Edge {
   unowned let from: AnyNode
   unowned let to: AnyNode
   var pending = false
@@ -47,14 +47,21 @@ final class Edge {
 }
 
 protocol AnyNode: AnyObject {
+  var id: NodeID { get }
   var name: String { get }
+  var value: Any? { get }
   var outgoingEdges: [Edge] { get set }
   var incomingEdges: [Edge] { get set }
   var potentiallyDirty: Bool { get set }
   func recomputeIfNeeded()
 }
 
-final class Node<Value>: AnyNode {
+public struct NodeID {
+  let raw: ObjectIdentifier
+}
+
+final class Node<Value>: AnyNode, Identifiable {
+  var id: NodeID { NodeID(raw: ObjectIdentifier(self)) }
   unowned var graph: AttributeGraph
   let name: String
   var rule: (() -> Value)?
@@ -68,6 +75,8 @@ final class Node<Value>: AnyNode {
       }
     }
   }
+
+  var value: Any? { cachedValue }
 
   private var cachedValue: Value?
 
