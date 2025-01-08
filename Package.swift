@@ -3,15 +3,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "AttributeGraph",
-    products: [
-        .library(name: "AttributeGraph", targets: ["AttributeGraph"]),
-    ],
-    targets: [
-        .target(name: "AttributeGraph"),
-        .testTarget(
-            name: "AttributeGraphTests",
-            dependencies: ["AttributeGraph"]
-        ),
-    ]
+  name: "AttributeGraph",
+  platforms: [
+    .macOS(.v15),
+  ],
+  products: [
+    .library(name: "AttributeGraph", targets: ["AttributeGraph"]),
+    .executable(name: "VisualizeGraph", targets: ["VisualizeGraph"]),
+  ],
+  targets: [
+    .target(name: "AttributeGraph"),
+    .testTarget(
+      name: "AttributeGraphTests",
+      dependencies: ["AttributeGraph"]
+    ),
+    .executableTarget(name: "VisualizeGraph"),
+  ]
 )
