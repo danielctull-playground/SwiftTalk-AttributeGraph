@@ -1,15 +1,19 @@
 
-final class AttributeGraph {
+public final class AttributeGraph {
   var nodes: [AnyNode] = []
   var currentNode: AnyNode?
 
-  func input<Value>(name: String, _ value: Value) -> Node<Value> {
+  public init() {}
+
+  @discardableResult
+  public func input<Value>(name: String, _ value: Value) -> Node<Value> {
     let node = Node(name: name, graph: self, wrappedValue: value)
     nodes.append(node)
     return node
   }
 
-  func rule<Value>(name: String, _ rule: @escaping () -> Value) -> Node<Value> {
+  @discardableResult
+  public func rule<Value>(name: String, _ rule: @escaping () -> Value) -> Node<Value> {
     let node = Node(name: name, graph: self, rule: rule)
     nodes.append(node)
     return node
@@ -60,7 +64,13 @@ public struct NodeID {
   let raw: ObjectIdentifier
 }
 
-final class Node<Value>: AnyNode, Identifiable {
+extension NodeID: CustomStringConvertible {
+  public var description: String {
+    raw.debugDescription.filter { $0.isLetter || $0.isNumber }
+  }
+}
+
+public final class Node<Value>: AnyNode, Identifiable {
   var id: NodeID { NodeID(raw: ObjectIdentifier(self)) }
   unowned var graph: AttributeGraph
   let name: String
@@ -80,7 +90,7 @@ final class Node<Value>: AnyNode, Identifiable {
 
   private var cachedValue: Value?
 
-  var wrappedValue: Value {
+  public var wrappedValue: Value {
     get {
       recomputeIfNeeded()
       return cachedValue!

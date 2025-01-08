@@ -17,6 +17,9 @@ let package = Package(
       name: "AttributeGraphTests",
       dependencies: ["AttributeGraph"]
     ),
-    .executableTarget(name: "VisualizeGraph"),
+    .executableTarget(
+      name: "VisualizeGraph",
+      dependencies: ["AttributeGraph"]
+    ),
   ]
 )

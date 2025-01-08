@@ -1,5 +1,5 @@
 
-struct Snapshot {
+public struct Snapshot {
   let nodes: [Node]
   let edges: [Edge]
 }
@@ -23,14 +23,14 @@ extension Snapshot {
 
 extension Snapshot {
 
-  init(graph: AttributeGraph) {
+  public init(graph: AttributeGraph) {
     self.init(
       nodes: graph.nodes.map {
         Node(
           id: $0.id,
           name: $0.name,
           potentiallyDirty: $0.potentiallyDirty,
-          value: String(describing: $0.value)
+          value: $0.value.map { String(describing: $0) } ?? "<nil>"
         )
       },
       edges: graph.nodes.flatMap { node in
@@ -42,5 +42,32 @@ extension Snapshot {
         }
       }
     )
+  }
+}
+
+// MARK: - Graphviz
+
+extension Snapshot {
+  public var dot: String {
+    let value = """
+    digraph {
+    \(nodes.map(\.dot).map { "  " + $0 }.joined(separator: "\n"))
+    \(edges.map(\.dot).map { "  " + $0 }.joined(separator: "\n"))
+    }
+    """
+    print(value)
+    return value
+  }
+}
+
+extension Snapshot.Node {
+  fileprivate var dot: String {
+    #"\#(id) [label="\#(name) (\#(value))", style=\#(potentiallyDirty ? "filled" : "solid")]"#
+  }
+}
+
+extension Snapshot.Edge {
+  fileprivate var dot: String {
+    "\(from) -> \(to) [style=\(pending ? "dashed" : "solid")]"
   }
 }
