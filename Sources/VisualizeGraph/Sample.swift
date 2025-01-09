@@ -66,6 +66,10 @@ struct LayoutComputer {
   let sizeThatFits: (ProposedViewSize) -> CGSize
 }
 
+extension LayoutComputer: CustomStringConvertible {
+  var description: String { "" }
+}
+
 func layout() -> [Snapshot] {
 
   var snapshots: [Snapshot] = []

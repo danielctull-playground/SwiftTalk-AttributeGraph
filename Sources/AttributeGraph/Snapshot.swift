@@ -62,7 +62,7 @@ extension Snapshot {
 
 extension Snapshot.Node {
   fileprivate var dot: String {
-    #"\#(id) [label="\#(name) (\#(value))", style=\#(potentiallyDirty ? "filled" : "solid")]"#
+    #"\#(id) [label="\#(name) (\#(value))", style=\#(potentiallyDirty ? "filled" : "solid") shape=rect]"#
   }
 }
 
