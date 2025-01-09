@@ -64,6 +64,7 @@ func hstack() -> [Snapshot] {
 
 struct LayoutComputer {
   let sizeThatFits: (ProposedViewSize) -> CGSize
+  let place: (CGRect) -> Void
 }
 
 extension LayoutComputer: CustomStringConvertible {
@@ -78,8 +79,14 @@ func layout() -> [Snapshot] {
   let toggle = graph.input(name: "toggle", false)
   let proposal = graph.input(name: "size", ProposedViewSize(width: 200, height: 100))
 
+  var frames: [CGRect] = [.null, .null]
+
   let redLayoutComputer = graph.rule(name: "red layout computer") {
-    LayoutComputer { $0.replacingUnspecifiedDimensions() }
+    LayoutComputer {
+      $0.replacingUnspecifiedDimensions()
+    } place: { rect in
+      frames[0] = rect
+    }
   }
 
   let nestedLayoutComputer = graph.rule(name: "nested layout computer") {
@@ -89,6 +96,8 @@ func layout() -> [Snapshot] {
         width: toggle ? 50 : 100,
         height: proposal.height ?? 10
       )
+    } place: { rect in
+      frames[1] = rect
     }
   }
 
@@ -113,6 +122,24 @@ func layout() -> [Snapshot] {
       )
 
       return result
+
+    } place: { rect in
+
+      var remainder = rect.width
+
+      let nestedSize = nestedLayoutComputer
+        .sizeThatFits(ProposedViewSize(width: remainder/2, height: rect.height))
+      remainder -= nestedSize.width
+
+      let redSize = redLayoutComputer
+        .sizeThatFits(ProposedViewSize(width: remainder, height: rect.height))
+
+      var origin = rect.origin
+
+      redLayoutComputer.place(CGRect(origin: origin, size: redSize))
+
+      origin.x += redSize.width
+      nestedLayoutComputer.place(CGRect(origin: origin, size: redSize))
     }
   }
 
@@ -120,21 +147,27 @@ func layout() -> [Snapshot] {
     hstackLayoutComputer.wrappedValue.sizeThatFits(proposal.wrappedValue)
   }
 
+  let childGeometries = graph.rule(name: "child geometries") {
+    let lc = hstackLayoutComputer.wrappedValue
+    lc.place(CGRect(origin: .zero, size: size.wrappedValue))
+    return frames
+  }
+
   snapshots.append(Snapshot(graph: graph))
 
-  _ = size.wrappedValue
+  _ = childGeometries.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
   toggle.wrappedValue.toggle()
   snapshots.append(Snapshot(graph: graph))
 
-  _ = size.wrappedValue
+  _ = childGeometries.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
   proposal.wrappedValue.width = 300
   snapshots.append(Snapshot(graph: graph))
 
-  _ = size.wrappedValue
+  _ = childGeometries.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
   return snapshots
