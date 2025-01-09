@@ -18,25 +18,46 @@ struct Sample: View {
       }
     }
     .onAppear {
-      let graph = AttributeGraph()
-      let a = graph.input(name: "A", 10)
-      let b = graph.input(name: "B", 20)
-      let c = graph.rule(name: "C") { a.wrappedValue + b.wrappedValue }
-      let d = graph.rule(name: "D") { c.wrappedValue * 2 }
-      let e = graph.rule(name: "E") { a.wrappedValue * 2 }
-      snapshots.append(Snapshot(graph: graph))
-      _ = e.wrappedValue
-      snapshots.append(Snapshot(graph: graph))
-      _ = d.wrappedValue
-      snapshots.append(Snapshot(graph: graph))
-      b.wrappedValue += 1
-      snapshots.append(Snapshot(graph: graph))
-      a.wrappedValue += 1
-      snapshots.append(Snapshot(graph: graph))
-      _ = d.wrappedValue
-      snapshots.append(Snapshot(graph: graph))
-      _ = e.wrappedValue
-      snapshots.append(Snapshot(graph: graph))
+      snapshots = hstack()
     }
   }
+}
+
+func hstack() -> [Snapshot] {
+
+  var snapshots: [Snapshot] = []
+
+//  var toggle = false
+//  var proposedWidth = 200
+//  var remainder = proposedWidth
+//  var nestedWidth = toggle ? 50 : 100
+//  remainder -= nestedWidth
+//  let redWidth = remainder
+
+  let graph = AttributeGraph()
+  let toggle = graph.input(name: "toggle", false)
+  let width = graph.input(name: "proposedWidth", 200.0)
+
+  let nested = graph.rule(name: "Nested") { toggle.wrappedValue ? 50.0 : 100.0 }
+
+  let hstack = graph.rule(name: "HStack") {
+    var remainder = width.wrappedValue
+    let nestedWidth = nested.wrappedValue
+    remainder -= nestedWidth
+    let red = remainder
+    return [red, nestedWidth]
+  }
+
+  snapshots.append(Snapshot(graph: graph))
+
+  let _ = hstack.wrappedValue
+  snapshots.append(Snapshot(graph: graph))
+
+  toggle.wrappedValue.toggle()
+  snapshots.append(Snapshot(graph: graph))
+
+  let _ = hstack.wrappedValue
+  snapshots.append(Snapshot(graph: graph))
+
+  return snapshots
 }
