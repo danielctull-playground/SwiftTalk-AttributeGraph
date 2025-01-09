@@ -11,7 +11,7 @@ struct Sample: View {
       if index >= 0, index < snapshots.count {
         Graphviz(dot: snapshots[index].dot)
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-        Stepper(value: $index) {
+        Stepper(value: $index, in: 0...(snapshots.count - 1)) {
           Text("step \(index + 1) / \(snapshots.count)")
         }
         .padding()
