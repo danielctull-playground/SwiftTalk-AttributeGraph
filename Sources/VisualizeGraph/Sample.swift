@@ -71,6 +71,27 @@ extension LayoutComputer: CustomStringConvertible {
   var description: String { "" }
 }
 
+struct DisplayList {
+  var items: [Item]
+
+  struct Item {
+    let name: String
+    let rect: CGRect
+  }
+}
+
+extension DisplayList: CustomStringConvertible {
+  var description: String {
+    items.description
+  }
+}
+
+extension DisplayList.Item: CustomStringConvertible {
+  var description: String {
+    "\(name): \(rect)"
+  }
+}
+
 func layout() -> [Snapshot] {
 
   var snapshots: [Snapshot] = []
@@ -153,21 +174,41 @@ func layout() -> [Snapshot] {
     return frames
   }
 
+  let redGeometry = graph.rule(name: "red geometry") {
+    childGeometries.wrappedValue[0]
+  }
+
+  let nestedGeometry = graph.rule(name: "nested geometry") {
+    childGeometries.wrappedValue[1]
+  }
+
+  let redDisplayList = graph.rule(name: "red display list") {
+    DisplayList(items: [.init(name: "red", rect: redGeometry.wrappedValue)])
+  }
+
+  let nestedDisplayList = graph.rule(name: "nested display list") {
+    DisplayList(items: [.init(name: "nested", rect: nestedGeometry.wrappedValue)])
+  }
+
+  let displayList = graph.rule(name: "display list") {
+    DisplayList(items: redDisplayList.wrappedValue.items + nestedDisplayList.wrappedValue.items)
+  }
+
   snapshots.append(Snapshot(graph: graph))
 
-  _ = childGeometries.wrappedValue
+  _ = displayList.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
   toggle.wrappedValue.toggle()
   snapshots.append(Snapshot(graph: graph))
 
-  _ = childGeometries.wrappedValue
+  _ = displayList.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
   proposal.wrappedValue.width = 300
   snapshots.append(Snapshot(graph: graph))
 
-  _ = childGeometries.wrappedValue
+  _ = displayList.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
   return snapshots

@@ -55,14 +55,19 @@ extension Snapshot {
     \(edges.map(\.dot).map { "  " + $0 }.joined(separator: "\n"))
     }
     """
-    print(value)
     return value
+  }
+}
+
+extension String {
+  var escaped: String {
+    replacing("\"", with: "\\\"")
   }
 }
 
 extension Snapshot.Node {
   fileprivate var dot: String {
-    #"\#(id) [label="\#(name) (\#(value))", style=\#(potentiallyDirty ? "filled" : "solid") shape=rect]"#
+    #"\#(id) [label="\#(name) (\#(value.escaped))", style=\#(potentiallyDirty ? "filled" : "solid") shape=rect]"#
   }
 }
 
