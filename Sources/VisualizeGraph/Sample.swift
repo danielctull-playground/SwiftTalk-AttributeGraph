@@ -123,45 +123,10 @@ func layout() -> [Snapshot] {
   }
 
   let hstackLayoutComputer = graph.rule(name: "hstack layout computer") {
-
-    let nestedLayoutComputer = nestedLayoutComputer.wrappedValue
-    let redLayoutComputer = redLayoutComputer.wrappedValue
-
-    return LayoutComputer { proposal in
-      var remainder = proposal.width!
-
-      let nestedSize = nestedLayoutComputer
-        .sizeThatFits(ProposedViewSize(width: remainder/2, height: proposal.height))
-      remainder -= nestedSize.width
-
-      let redSize = redLayoutComputer
-        .sizeThatFits(ProposedViewSize(width: remainder, height: proposal.height))
-
-      let result = CGSize(
-        width: redSize.width + nestedSize.width,
-        height: max(redSize.height, nestedSize.height)
-      )
-
-      return result
-
-    } place: { rect in
-
-      var remainder = rect.width
-
-      let nestedSize = nestedLayoutComputer
-        .sizeThatFits(ProposedViewSize(width: remainder/2, height: rect.height))
-      remainder -= nestedSize.width
-
-      let redSize = redLayoutComputer
-        .sizeThatFits(ProposedViewSize(width: remainder, height: rect.height))
-
-      var origin = rect.origin
-
-      redLayoutComputer.place(CGRect(origin: origin, size: redSize))
-
-      origin.x += redSize.width
-      nestedLayoutComputer.place(CGRect(origin: origin, size: redSize))
-    }
+     HStackLayout().layoutComputer(subviews: [
+      redLayoutComputer.wrappedValue,
+      nestedLayoutComputer.wrappedValue,
+    ])
   }
 
   let size = graph.rule(name: "hstack size") {
