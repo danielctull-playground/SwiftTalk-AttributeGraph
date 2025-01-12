@@ -92,20 +92,24 @@ extension DisplayList.Item: CustomStringConvertible {
   }
 }
 
+func run<View: MyView>(_ view: View, size: Node<CGSize>) -> ViewOutputs {
+  let graph = size.graph
+  let viewNode = graph.rule(name: "root node") { view }
+  let frame = graph.rule(name: "root frame") {
+    CGRect(origin: .zero, size: size.wrappedValue)
+  }
+  let inputs = ViewInputs(frame: frame)
+  return View.makeView(node: viewNode, inputs: inputs)
+}
+
 func layout() -> [Snapshot] {
 
   var snapshots: [Snapshot] = []
 
   let graph = AttributeGraph()
   let size = graph.input(name: "size", CGSize(width: 200, height: 100))
-  let color = graph.rule(name: "color") { MyColor(name: "blue") }
-
-  let inputs = ViewInputs(frame: graph.rule(name: "root frame") {
-    CGRect(origin: .zero, size: size.wrappedValue)
-  })
-
-  let outputs = MyColor.makeView(node: color, inputs: inputs)
-
+  let color = MyColor(name: "blue")
+  let outputs = run(color, size: size)
   let displayList = outputs.displayList
 
   snapshots.append(Snapshot(graph: graph))
