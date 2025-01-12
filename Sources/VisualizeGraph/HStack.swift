@@ -2,6 +2,8 @@ import SwiftUI
 
 struct HStackLayout: MyLayout {
 
+  static let name = "HStack"
+
   func frames(
     proposedSize proposal: ProposedViewSize,
     subviews: [LayoutProxy]
