@@ -72,7 +72,7 @@ extension NodeID: CustomStringConvertible {
 
 public final class Node<Value>: AnyNode, Identifiable {
   var id: NodeID { NodeID(raw: ObjectIdentifier(self)) }
-  unowned var graph: AttributeGraph
+  unowned public private(set) var graph: AttributeGraph
   let name: String
   var rule: (() -> Value)?
   var incomingEdges: [Edge] = []

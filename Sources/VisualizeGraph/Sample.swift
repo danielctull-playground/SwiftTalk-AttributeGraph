@@ -76,7 +76,7 @@ struct DisplayList {
 
   struct Item {
     let name: String
-    let rect: CGRect
+    let frame: CGRect
   }
 }
 
@@ -88,7 +88,7 @@ extension DisplayList: CustomStringConvertible {
 
 extension DisplayList.Item: CustomStringConvertible {
   var description: String {
-    "\(name): \(rect)"
+    "\(name): \(frame)"
   }
 }
 
@@ -97,80 +97,23 @@ func layout() -> [Snapshot] {
   var snapshots: [Snapshot] = []
 
   let graph = AttributeGraph()
-  let toggle = graph.input(name: "toggle", false)
-  let proposal = graph.input(name: "size", ProposedViewSize(width: 200, height: 100))
+  let size = graph.input(name: "size", CGSize(width: 200, height: 100))
+  let color = graph.rule(name: "color") { MyColor(name: "blue") }
 
-  var frames: [CGRect] = [.null, .null]
+  let inputs = ViewInputs(frame: graph.rule(name: "root frame") {
+    CGRect(origin: .zero, size: size.wrappedValue)
+  })
 
-  let redLayoutComputer = graph.rule(name: "red layout computer") {
-    LayoutComputer {
-      $0.replacingUnspecifiedDimensions()
-    } place: { rect in
-      frames[0] = rect
-    }
-  }
+  let outputs = MyColor.makeView(node: color, inputs: inputs)
 
-  let nestedLayoutComputer = graph.rule(name: "nested layout computer") {
-    let toggle = toggle.wrappedValue
-    return LayoutComputer { proposal in
-      CGSize(
-        width: toggle ? 50 : 100,
-        height: proposal.height ?? 10
-      )
-    } place: { rect in
-      frames[1] = rect
-    }
-  }
-
-  let hstackLayoutComputer = graph.rule(name: "hstack layout computer") {
-     HStackLayout().layoutComputer(subviews: [
-      redLayoutComputer.wrappedValue,
-      nestedLayoutComputer.wrappedValue,
-    ])
-  }
-
-  let size = graph.rule(name: "hstack size") {
-    hstackLayoutComputer.wrappedValue.sizeThatFits(proposal.wrappedValue)
-  }
-
-  let childGeometries = graph.rule(name: "child geometries") {
-    let lc = hstackLayoutComputer.wrappedValue
-    lc.place(CGRect(origin: .zero, size: size.wrappedValue))
-    return frames
-  }
-
-  let redGeometry = graph.rule(name: "red geometry") {
-    childGeometries.wrappedValue[0]
-  }
-
-  let nestedGeometry = graph.rule(name: "nested geometry") {
-    childGeometries.wrappedValue[1]
-  }
-
-  let redDisplayList = graph.rule(name: "red display list") {
-    DisplayList(items: [.init(name: "red", rect: redGeometry.wrappedValue)])
-  }
-
-  let nestedDisplayList = graph.rule(name: "nested display list") {
-    DisplayList(items: [.init(name: "nested", rect: nestedGeometry.wrappedValue)])
-  }
-
-  let displayList = graph.rule(name: "display list") {
-    DisplayList(items: redDisplayList.wrappedValue.items + nestedDisplayList.wrappedValue.items)
-  }
+  let displayList = outputs.displayList
 
   snapshots.append(Snapshot(graph: graph))
 
   _ = displayList.wrappedValue
   snapshots.append(Snapshot(graph: graph))
 
-  toggle.wrappedValue.toggle()
-  snapshots.append(Snapshot(graph: graph))
-
-  _ = displayList.wrappedValue
-  snapshots.append(Snapshot(graph: graph))
-
-  proposal.wrappedValue.width = 300
+  size.wrappedValue.width = 300
   snapshots.append(Snapshot(graph: graph))
 
   _ = displayList.wrappedValue
