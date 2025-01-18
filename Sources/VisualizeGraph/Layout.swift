@@ -34,16 +34,25 @@ struct LayoutModifier<Layout: MyLayout, Content: MyView>: MyView {
     node: Node<LayoutModifier<Layout, Content>>,
     inputs: ViewInputs
   ) -> ViewOutputs {
+
     let graph = node.graph
 
+    let contentNode = graph.rule(name: "content") { node.wrappedValue.content }
+    let inputs = ViewInputs(frame: inputs.frame) // TODO
+    let outputs = Content.makeView(node: contentNode, inputs: inputs)
+
     let layoutComputer: Node<LayoutComputer> = graph.rule(name: "layout computer \(Layout.name)") {
-      fatalError()
+      let layout = node.wrappedValue.layout
+      let subviews = [outputs.layoutComputer.wrappedValue]
+      return LayoutComputer { proposal in
+        layout.sizeThatFits(proposedSize: proposal, subviews: subviews)
+      } place: { rect in
+        fatalError()
+      }
     }
 
-    let displayList: Node<DisplayList> = graph.rule(name: "display list \(Layout.name)") {
-      fatalError()
-    }
-
-    return ViewOutputs(layoutComputer: layoutComputer, displayList: displayList)
+    return ViewOutputs(
+      layoutComputer: layoutComputer,
+      displayList: outputs.displayList)
   }
 }
