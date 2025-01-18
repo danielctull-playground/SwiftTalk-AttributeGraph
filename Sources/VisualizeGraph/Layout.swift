@@ -1,8 +1,6 @@
 import AttributeGraph
 import SwiftUI
 
-typealias LayoutProxy = LayoutComputer
-
 protocol MyLayout {
 
   static var name: String { get } 
@@ -17,11 +15,20 @@ protocol MyLayout {
 
 extension MyLayout {
 
-  func layoutComputer(subviews: [LayoutProxy]) -> LayoutComputer {
-    LayoutComputer { proposal in
-      sizeThatFits(proposedSize: proposal, subviews: subviews)
-    } place: { rect in
-      place(in: rect, subviews: subviews)
+  func layoutComputer(computers: [LayoutComputer]) -> LayoutComputer {
+    var rects = Array(repeating: CGRect.zero, count: computers.count)
+    let proxies = computers.enumerated().map { (index, computer) in
+      LayoutProxy(computer: computer) { rect in
+        rects[index] = rect
+      }
+    }
+    return LayoutComputer { proposal in
+      sizeThatFits(proposedSize: proposal, subviews: proxies)
+    } childGeometries: { rect in
+      place(in: rect, subviews: proxies)
+      return computers.enumerated().flatMap { (index, computer) in
+        computer.childGeometries(rects[index])
+      }
     }
   }
 }
@@ -38,17 +45,20 @@ struct LayoutModifier<Layout: MyLayout, Content: MyView>: MyView {
     let graph = node.graph
 
     let contentNode = graph.rule(name: "content") { node.wrappedValue.content }
-    let inputs = ViewInputs(frame: inputs.frame) // TODO
+
+    var layoutComputer: Node<LayoutComputer>!
+
+    let contentFrame = graph.rule(name: "child geometry") {
+      layoutComputer.wrappedValue.childGeometries(inputs.frame.wrappedValue)
+        .reduce(CGRect.null) { $0.union($1) }
+    }
+    let inputs = ViewInputs(frame: contentFrame)
     let outputs = Content.makeView(node: contentNode, inputs: inputs)
 
-    let layoutComputer: Node<LayoutComputer> = graph.rule(name: "layout computer \(Layout.name)") {
+    layoutComputer = graph.rule(name: "layout computer \(Layout.name)") {
       let layout = node.wrappedValue.layout
-      let subviews = [outputs.layoutComputer.wrappedValue]
-      return LayoutComputer { proposal in
-        layout.sizeThatFits(proposedSize: proposal, subviews: subviews)
-      } place: { rect in
-        fatalError()
-      }
+      let computers = [outputs.layoutComputer.wrappedValue]
+      return layout.layoutComputer(computers: computers)
     }
 
     return ViewOutputs(

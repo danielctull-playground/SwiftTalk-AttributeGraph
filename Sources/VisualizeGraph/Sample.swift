@@ -62,9 +62,18 @@ func hstack() -> [Snapshot] {
   return snapshots
 }
 
+struct LayoutProxy {
+  let computer: LayoutComputer
+  let place: (CGRect) -> Void
+
+  func sizeThatFits(proposedSize: ProposedViewSize) -> CGSize {
+    computer.sizeThatFits(proposedSize)
+  }
+}
+
 struct LayoutComputer {
   let sizeThatFits: (ProposedViewSize) -> CGSize
-  let place: (CGRect) -> Void
+  let childGeometries: (CGRect) -> [CGRect]
 }
 
 extension LayoutComputer: CustomStringConvertible {

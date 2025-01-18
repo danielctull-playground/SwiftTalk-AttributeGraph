@@ -12,8 +12,8 @@ struct HStackLayout: MyLayout {
     let flexibilities = subviews.map { subview in
       let min = ProposedViewSize(width: 0, height: proposal.height)
       let max = ProposedViewSize(width: .infinity, height: proposal.height)
-      let smallest = subview.sizeThatFits(min)
-      let largest = subview.sizeThatFits(max)
+      let smallest = subview.sizeThatFits(proposedSize: min)
+      let largest = subview.sizeThatFits(proposedSize: max)
       return largest.width - smallest.width
     }
 
@@ -31,7 +31,7 @@ struct HStackLayout: MyLayout {
         width: remainingWidth / CGFloat(remainingSubviews),
         height: proposal.height)
 
-      let size = subview.sizeThatFits(proposal)
+      let size = subview.sizeThatFits(proposedSize: proposal)
 
       sizes[index] = size
       remainingSubviews -= 1

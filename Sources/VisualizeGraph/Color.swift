@@ -11,8 +11,8 @@ extension MyColor: MyView {
     let layoutComputer = graph.rule(name: "layout computer") {
       LayoutComputer { proposal in
         proposal.replacingUnspecifiedDimensions()
-      } place: { rect in
-        fatalError()
+      } childGeometries: { rect in
+        [rect]
       }
     }
 
