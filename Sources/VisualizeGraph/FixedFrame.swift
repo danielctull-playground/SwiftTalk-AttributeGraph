@@ -28,7 +28,10 @@ struct FixedFrameLayout: MyLayout {
   }
 
   func place(in rect: CGRect, subviews: [LayoutProxy]) {
-    let size = subviews[0].sizeThatFits(proposedSize: ProposedViewSize(rect.size))
+    let proposal = ProposedViewSize(
+      width: width ?? rect.width,
+      height: width ?? rect.height)
+    let size = subviews[0].sizeThatFits(proposedSize: proposal)
     let origin = CGPoint(
       x: (rect.width - size.width)/2,
       y: (rect.height - size.height)/2)
