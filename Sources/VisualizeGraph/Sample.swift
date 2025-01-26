@@ -118,6 +118,7 @@ func layout() -> [Snapshot] {
   let graph = AttributeGraph()
   let size = graph.input(name: "size", CGSize(width: 200, height: 100))
   let color = MyColor(name: "blue")
+    .padding()
     .frame(width: 60, height: 60)
   let outputs = run(color, size: size)
   let displayList = outputs.displayList
