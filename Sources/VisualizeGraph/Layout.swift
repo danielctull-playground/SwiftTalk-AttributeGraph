@@ -26,9 +26,7 @@ extension MyLayout {
       sizeThatFits(proposedSize: proposal, subviews: proxies)
     } childGeometries: { rect in
       place(in: rect, subviews: proxies)
-      return computers.enumerated().flatMap { (index, computer) in
-        computer.childGeometries(rects[index])
-      }
+      return rects
     }
   }
 }

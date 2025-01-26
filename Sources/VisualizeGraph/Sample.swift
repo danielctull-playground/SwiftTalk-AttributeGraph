@@ -73,6 +73,7 @@ struct LayoutProxy {
 
 struct LayoutComputer {
   let sizeThatFits: (ProposedViewSize) -> CGSize
+  /// Geometries of the _direct_ layout children.
   let childGeometries: (CGRect) -> [CGRect]
 }
 
